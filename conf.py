@@ -10,7 +10,6 @@ app = Flask(__name__)
 def index():
     return "Selenium está rodando no Render!"
 
-# Mudou de POST para GET e pega 'query' via query string (?query=...)
 @app.route("/search", methods=["GET"])
 def search():
     query = request.args.get("query", "ChatGPT")
@@ -34,3 +33,4 @@ def search():
     driver.quit()
 
     return jsonify({"results": titles[:5]})  # Retorna os 5 primeiros títulos
+
