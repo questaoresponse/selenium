@@ -1,52 +1,36 @@
-import instaloader
+from flask import Flask, request, jsonify
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
 import os
-from google import genai
-from dotenv import load_dotenv
-from google.genai.types import Tool, GoogleSearch
 
-# Carrega variáveis de ambiente
-load_dotenv()
+app = Flask(__name__)
 
-# models = [
-    # gemini-1.5-flash
-    # gemini-1.5-flash-8b
-    # gemini-1.5-pro
-    # gemini-2.0-flash
-    # gemini-2.0-flash-lite
-    # gemini-2.0-flash-preview-image-generation
-    # gemini-2.5-flash-preview-04-17
-# ]
+@app.route("/")
+def index():
+    return "Selenium está rodando no Render!"
 
-class Verifai:
-    def __init__(self):
-        self.temp_path = "verifica_ai_temp"
+@app.route("/search", methods=["POST"])
+def search():
+    data = request.get_json()
+    query = data.get("query", "ChatGPT")
 
-        self.L = instaloader.Instaloader(
-            filename_pattern="vl_{shortcode}",
-            dirname_pattern=self.temp_path,
-            download_videos=True,
-            download_video_thumbnails=True,
-            download_geotags=False,
-            save_metadata=False,
-            download_comments=False,
-            post_metadata_txt_pattern=''
-        )
+    options = Options()
+    options.add_argument("--headless")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
 
-        self.username = os.getenv("IG_USERNAME")
-        self.password = os.getenv("IG_PASSWORD")
-        self.API_KEY_GEMINI = os.getenv("API_KEY_GEMINI")
-        self.PAGE_ACCESS_TOKEN = os.getenv("PAGE_ACCESS_TOKEN")
-        self.DEBUG = os.getenv("DEBUG") == "true"
-        self.API_KEY = os.getenv('GOOGLE_API_KEY')
-        self.CSE_ID = os.getenv('GOOGLE_CSE_ID')
-        self.VERIFY_TOKEN = os.getenv("VERIFY_TOKEN")
-        self.VERIFICA_AI_SERVER = os.getenv("VERIFICA_AI_SERVER")
-        self.VERIFICA_AI_PROXY = os.getenv("VERIFICA_AI_PROXY")
+    driver = webdriver.Chrome(options=options)
+    driver.get("https://www.google.com")
 
-        self.client = genai.Client(api_key=self.API_KEY_GEMINI)
+    search_box = driver.find_element(By.NAME, "q")
+    search_box.send_keys(query)
+    search_box.submit()
 
-        self.google_search_tool = Tool(
-            google_search = GoogleSearch()
-        )
+    results = driver.find_elements(By.CSS_SELECTOR, "h3")
+    titles = [r.text for r in results if r.text.strip() != ""]
 
-        self.model = "gemini-2.0-flash"
+    driver.quit()
+
+    return jsonify({"results": titles[:5]})  # Retorna os 5 primeiros títulos
