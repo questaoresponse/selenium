@@ -10,10 +10,10 @@ app = Flask(__name__)
 def index():
     return "Selenium está rodando no Render!"
 
-@app.route("/search", methods=["POST"])
+# Mudou de POST para GET e pega 'query' via query string (?query=...)
+@app.route("/search", methods=["GET"])
 def search():
-    data = request.get_json()
-    query = data.get("query", "ChatGPT")
+    query = request.args.get("query", "ChatGPT")
 
     options = Options()
     options.add_argument("--headless")
